@@ -14,15 +14,20 @@ const activities = [
 
 function HomeScreen() {
   const navigation = useNavigation();
-  const userName = 'Lucas'; // aqui depois vem o nome dinâmico
+  const userName = 'sora claudinha'; 
 
   return (
-    <View style={styles.container}>
+     <View style={styles.container}>
       <View style={styles.header}>
         <Image source={require('../assets/logo.png')} style={styles.logo} />
-        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Icon name="menu" size={28} color="#FA774C" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row' }}>
+          <TouchableOpacity onPress={() => navigation.navigate('AddTask')}>
+            <Icon name="plus-circle" size={28} color="#FA774C" style={{ marginRight: 15 }} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Icon name="menu" size={28} color="#FA774C" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Text style={styles.greeting}>Olá, {userName}</Text>
