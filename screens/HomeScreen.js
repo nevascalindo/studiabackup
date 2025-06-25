@@ -1,23 +1,72 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/Feather';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Feather';
+import { supabase } from '../lib/supabase';
 
-const Tab = createBottomTabNavigator();
-
-const activities = [
-  { id: '1', title: 'Estudar Matemática' },
-  { id: '2', title: 'Ler capítulo de História' },
-  { id: '3', title: 'Revisar Inglês' },
-];
-
-function HomeScreen() {
+export default function HomeScreen() {
   const navigation = useNavigation();
-  const userName = 'sora claudinha'; 
+  const [userName, setUserName] = useState('');
+  const [activities, setActivities] = useState([]);
+
+  // Busca nome do usuário
+  useEffect(() => {
+    async function fetchUserName() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          Alert.alert('Erro', error.message);
+          return;
+        }
+        setUserName(data.name);
+      }
+    }
+    fetchUserName();
+  }, []);
+
+  // Busca atividades do usuário
+  const fetchActivities = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('user_id', userData.user.id)
+      .order('due_date', { ascending: true });
+
+    if (error) {
+      Alert.alert('Erro', error.message);
+      return;
+    }
+    setActivities(data);
+  };
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  // Deletar tarefa
+  async function handleDeleteTask(id) {
+    const { error } = await supabase
+      .from('activities')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      Alert.alert('Erro', error.message);
+    } else {
+      Alert.alert('Tarefa removida!');
+      fetchActivities();
+    }
+  }
 
   return (
-     <View style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Image source={require('../assets/logo.png')} style={styles.logo} />
         <View style={{ flexDirection: 'row' }}>
@@ -34,104 +83,28 @@ function HomeScreen() {
 
       <FlatList
         data={activities}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.activityCard}>
+          <TouchableOpacity
+            onLongPress={() => handleDeleteTask(item.id)}
+            style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}
+          >
             <Text style={styles.activityText}>{item.title}</Text>
-          </View>
+            <Text style={styles.subText}>Professor: {item.teacher}</Text>
+            <Text style={styles.subText}>Entrega: {item.due_date}</Text>
+          </TouchableOpacity>
         )}
       />
     </View>
   );
 }
 
-function CalendarScreen() {
-  return (
-    <View style={styles.center}>
-      <Text>📅 Calendário</Text>
-    </View>
-  );
-}
-
-function ProfileScreen() {
-  return (
-    <View style={styles.center}>
-      <Text>👤 Perfil</Text>
-    </View>
-  );
-}
-
-export default function MainScreen() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#FA774C',
-        tabBarInactiveTintColor: '#999',
-        tabBarStyle: { backgroundColor: '#fff' },
-      }}
-    >
-      <Tab.Screen
-        name="Calendário"
-        component={CalendarScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <Icon name="calendar" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="Perfil"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <Icon name="user" color={color} size={size} />,
-        }}
-      />
-    </Tab.Navigator>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  logo: {
-    width: 60,
-    height: 60,
-    resizeMode: 'contain',
-  },
-  greeting: {
-    fontSize: 22,
-    color: '#FA774C',
-    fontFamily: 'Poppins-Bold',
-    marginBottom: 20,
-  },
-  activityCard: {
-    backgroundColor: '#F2F2F2',
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 15,
-  },
-  activityText: {
-    fontSize: 18,
-    fontFamily: 'Poppins-Regular',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#FFF', padding: 20 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  logo: { width: 60, height: 60, resizeMode: 'contain' },
+  greeting: { fontSize: 22, color: '#FA774C', fontFamily: 'Poppins-Bold', marginBottom: 20 },
+  activityCard: { padding: 20, borderRadius: 20, marginBottom: 15 },
+  activityText: { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#333' },
+  subText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: '#555' },
 });
