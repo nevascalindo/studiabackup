@@ -31,7 +31,7 @@ export default function AddTaskScreen() {
         {
           user_id: userData.user.id,
           title,
-          due_date: dueDate.toISOString().split('T')[0], // ISO date certinho
+          due_date: dueDate.toISOString().split('T')[0], 
           teacher,
           room,
           subject,
