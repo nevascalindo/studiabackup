@@ -10,7 +10,6 @@ export default function HomeScreen() {
   const [userName, setUserName] = useState('');
   const [activities, setActivities] = useState([]);
 
-  // Buscar nome do usuário
   useEffect(() => {
     async function fetchUserName() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -20,38 +19,27 @@ export default function HomeScreen() {
           .select('name')
           .eq('id', user.id)
           .single();
-
-        if (error) {
-          Alert.alert('Erro', error.message);
-          return;
-        }
-        setUserName(data.name);
+        if (!error) setUserName(data.name);
       }
     }
     fetchUserName();
   }, []);
 
-  // Buscar atividades
   const fetchActivities = async () => {
     const { data: userData } = await supabase.auth.getUser();
     const { data, error } = await supabase
       .from('activities')
       .select('*')
       .eq('user_id', userData.user.id)
+      .eq('done', false)
       .order('due_date', { ascending: true });
-
-    if (error) {
-      Alert.alert('Erro', error.message);
-      return;
-    }
-    setActivities(data);
+    if (!error) setActivities(data);
   };
 
   useEffect(() => {
     fetchActivities();
   }, []);
 
-  // Atualiza lista ao voltar pra tela
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       fetchActivities();
@@ -59,48 +47,48 @@ export default function HomeScreen() {
     return unsubscribe;
   }, [navigation]);
 
-  // Deletar tarefa
-  async function handleDeleteTask(id) {
-    const { error } = await supabase
-      .from('activities')
-      .delete()
-      .eq('id', id);
+  const handleDeleteTask = async (id) => {
+    const { error } = await supabase.from('activities').delete().eq('id', id);
+    if (!error) fetchActivities();
+  };
 
-    if (error) {
-      Alert.alert('Erro', error.message);
-    } else {
-      fetchActivities();
-    }
-  }
+  const handleCompleteTask = async (id) => {
+    const { error } = await supabase.from('activities').update({ done: true }).eq('id', id);
+    if (!error) fetchActivities();
+  };
 
-  // Concluir tarefa
- const handleCompleteTask = async (id) => {
-  const { error } = await supabase
-    .from('activities')
-    .update({ done: true })
-    .eq('id', id);
+  const renderItem = ({ item }) => {
+    const renderLeftActions = () => (
+      <TouchableOpacity style={styles.leftAction} onPress={() => handleDeleteTask(item.id)}>
+        <Text style={styles.actionText}>Excluir</Text>
+      </TouchableOpacity>
+    );
 
-  if (error) {
-    Alert.alert('Erro ao concluir', error.message);
-  } else {
-    fetchActivities(); // atualiza a lista depois
-  }
-};
+    const renderRightActions = () => (
+      <TouchableOpacity style={styles.rightAction} onPress={() => handleCompleteTask(item.id)}>
+        <Text style={styles.actionText}>Concluir</Text>
+      </TouchableOpacity>
+    );
 
-
-  // Swipe para excluir
-  const renderLeftActions = () => (
-    <View style={styles.leftAction}>
-      <Text style={styles.actionText}>Excluir</Text>
-    </View>
-  );
-
-  // Swipe para concluir
-  const renderRightActions = (onComplete) => (
-    <TouchableOpacity style={styles.rightAction} onPress={onComplete}>
-      <Text style={styles.actionText}>Concluir</Text>
-    </TouchableOpacity>
-  );
+    return (
+      <Swipeable
+        renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
+      >
+        <View style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.activityText}>{item.title}</Text>
+            <Text style={styles.subjectText}>{item.subject}</Text>
+          </View>
+          <Text style={styles.subText}>Professor: {item.teacher}</Text>
+          <View style={styles.cardFooterRow}>
+            <Text style={styles.subText}>Entrega: {item.due_date}</Text>
+            <Text style={styles.roomText}>Sala {item.room}</Text>
+          </View>
+        </View>
+      </Swipeable>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -121,25 +109,7 @@ export default function HomeScreen() {
       <FlatList
         data={activities}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Swipeable
-            renderLeftActions={renderLeftActions}
-            onSwipeableLeftOpen={() => handleDeleteTask(item.id)}
-            renderRightActions={() => renderRightActions(() => handleCompleteTask(item.id))}
-          >
-            <View style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.activityText}>{item.title}</Text>
-                <Text style={styles.subjectText}>{item.subject}</Text>
-              </View>
-              <Text style={styles.subText}>Professor: {item.teacher}</Text>
-              <View style={styles.cardFooterRow}>
-                <Text style={styles.subText}>Entrega: {item.due_date}</Text>
-                <Text style={styles.roomText}>Sala {item.room}</Text>
-              </View>
-            </View>
-          </Swipeable>
-        )}
+        renderItem={renderItem}
       />
     </View>
   );
@@ -155,55 +125,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 15,
   },
-  activityText: {
-    fontSize: 18,
-    fontFamily: 'Poppins-Bold',
-    color: '#333',
-  },
-  subText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#555',
-    marginTop: 5,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  subjectText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Bold',
-    color: '#333',
-  },
-  cardFooterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  roomText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#555',
-  },
-  leftAction: {
-    backgroundColor: '#FA774C',
-    justifyContent: 'center',
-    flex: 1,
-    paddingLeft: 20,
-  },
-  rightAction: {
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    flex: 1,
-    paddingRight: 20,
-    alignItems: 'flex-end',
-  },
-  actionText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'Poppins-Bold',
-  },
+  activityText: { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#333' },
+  subText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: '#555', marginTop: 5 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  subjectText: { fontSize: 14, fontFamily: 'Poppins-Bold', color: '#333' },
+  cardFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 },
+  roomText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: '#555' },
+  leftAction: { backgroundColor: '#FA774C', justifyContent: 'center', flex: 1, paddingLeft: 20 },
+  rightAction: { backgroundColor: '#4CAF50', justifyContent: 'center', flex: 1, paddingRight: 20, alignItems: 'flex-end' },
+  actionText: { color: '#FFF', fontSize: 16, fontFamily: 'Poppins-Bold' },
 });
