@@ -3,12 +3,12 @@ import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Alert } from
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { supabase } from '../lib/supabase';
-import { Swipeable } from 'react-native-gesture-handler';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [userName, setUserName] = useState('');
   const [activities, setActivities] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   useEffect(() => {
     async function fetchUserName() {
@@ -36,59 +36,60 @@ export default function HomeScreen() {
     if (!error) setActivities(data);
   };
 
+  useEffect(() => { fetchActivities(); }, []);
   useEffect(() => {
-    fetchActivities();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchActivities();
-    });
+    const unsubscribe = navigation.addListener('focus', () => { fetchActivities(); });
     return unsubscribe;
   }, [navigation]);
 
   const handleDeleteTask = async (id) => {
-    const { error } = await supabase.from('activities').delete().eq('id', id);
-    if (!error) fetchActivities();
+    await supabase.from('activities').delete().eq('id', id);
+    setOpenMenuId(null);
+    fetchActivities();
   };
 
   const handleCompleteTask = async (id) => {
-    const { error } = await supabase.from('activities').update({ done: true }).eq('id', id);
-    if (!error) fetchActivities();
+    await supabase.from('activities').update({ done: true }).eq('id', id);
+    setOpenMenuId(null);
+    fetchActivities();
   };
 
-  const renderItem = ({ item }) => {
-    const renderLeftActions = () => (
-      <TouchableOpacity style={styles.leftAction} onPress={() => handleDeleteTask(item.id)}>
-        <Text style={styles.actionText}>Excluir</Text>
-      </TouchableOpacity>
-    );
+  const handleEditTask = (item) => {
+    Alert.alert('Editar tarefa', `Você clicou para editar: "${item.title}"`);
+    setOpenMenuId(null);
+  };
 
-    const renderRightActions = () => (
-      <TouchableOpacity style={styles.rightAction} onPress={() => handleCompleteTask(item.id)}>
-        <Text style={styles.actionText}>Concluir</Text>
-      </TouchableOpacity>
-    );
+  const renderItem = ({ item }) => (
+    <View style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.activityText}>{item.title}</Text>
+        <TouchableOpacity
+          onPress={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+          style={styles.menuButton}
+        >
+          <Icon name="more-vertical" size={20} color="#333" />
+        </TouchableOpacity>
+      </View>
 
-    return (
-      <Swipeable
-        renderLeftActions={renderLeftActions}
-        renderRightActions={renderRightActions}
-      >
-        <View style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.activityText}>{item.title}</Text>
-            <Text style={styles.subjectText}>{item.subject}</Text>
-          </View>
-          <Text style={styles.subText}>Professor: {item.teacher}</Text>
-          <View style={styles.cardFooterRow}>
-            <Text style={styles.subText}>Entrega: {item.due_date}</Text>
-            <Text style={styles.roomText}>Sala {item.room}</Text>
-          </View>
+      <Text style={styles.subjectText}>{item.subject}</Text>
+      <Text style={styles.subText}>Professor: {item.teacher}</Text>
+
+      <View style={styles.cardFooterRow}>
+        <Text style={styles.subText}>Entrega: {item.due_date}</Text>
+        <Text style={styles.roomText}>Sala {item.room}</Text>
+      </View>
+      {openMenuId === item.id && (
+        <View style={styles.floatingMenu}>
+          <TouchableOpacity onPress={() => handleEditTask(item)} style={styles.menuOption}>
+            <Text style={styles.menuOptionText}>Editar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDeleteTask(item.id)} style={styles.menuOption}>
+            <Text style={[styles.menuOptionText, { color: 'red' }]}>Excluir</Text>
+          </TouchableOpacity>
         </View>
-      </Swipeable>
-    );
-  };
+      )}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -124,14 +125,46 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     marginBottom: 15,
+    position: 'relative',
   },
   activityText: { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#333' },
-  subText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: '#555', marginTop: 5 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  subjectText: { fontSize: 14, fontFamily: 'Poppins-Bold', color: '#333' },
-  cardFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 },
+  subjectText: { fontSize: 14, fontFamily: 'Poppins-Bold', color: '#333', marginBottom: 5 },
+  subText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: '#555' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
+  cardFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
   roomText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: '#555' },
-  leftAction: { backgroundColor: '#FA774C', justifyContent: 'center', flex: 1, paddingLeft: 20 },
-  rightAction: { backgroundColor: '#4CAF50', justifyContent: 'center', flex: 1, paddingRight: 20, alignItems: 'flex-end' },
-  actionText: { color: '#FFF', fontSize: 16, fontFamily: 'Poppins-Bold' },
+
+  checkButton: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    elevation: 3,
+    padding: 6,
+  },
+  menuButton: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    elevation: 3,
+    padding: 6,
+  },
+  floatingMenu: {
+    position: 'absolute',
+    top: 40,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    elevation: 5,
+    paddingVertical: 4,
+  },
+  menuOption: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  menuOptionText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#333',
+  },
 });
