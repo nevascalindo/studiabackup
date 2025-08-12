@@ -19,6 +19,8 @@
     "expo-font": "~13.3.1",
     "expo-splash-screen": "~0.30.9",
     "expo-status-bar": "~2.2.3",
+    "lottie-ios": "^4.5.1",
+    "lottie-react-native": "^7.3.1",
     "react": "19.0.0",
     "react-native": "0.79.3",
     "react-native-dotenv": "^3.4.11",
