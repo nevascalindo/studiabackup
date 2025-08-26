@@ -100,8 +100,18 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.headerMenuButton}>
+          <Icon name="menu" size={24} color="#333" />
+        </TouchableOpacity>
+        
         <Image source={require('../assets/logo.png')} style={styles.logo} />
-        {/* Você pode adicionar botões aqui */}
+        
+        <TouchableOpacity 
+          style={styles.addTaskButton}
+          onPress={() => navigation.navigate('AddTask')}
+        >
+          <Icon name="plus" size={24} color="#FFF" />
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.greeting}>Olá, {userName}</Text>
@@ -169,8 +179,23 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF', padding: 20 },
-  header: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 20 },
-  logo: { width: 60, height: 60, resizeMode: 'contain' },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 20,
+    position: 'relative',
+    paddingTop: 20,
+    height: 50
+  },
+  logo: { 
+    width: 60, 
+    height: 60, 
+    resizeMode: 'contain',
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -30
+  },
   greeting: { fontSize: 22, color: '#FA774C', fontFamily: 'Poppins-Bold', marginBottom: 20 },
 
   activityCard: {
@@ -195,24 +220,53 @@ const styles = StyleSheet.create({
     elevation: 3,
     padding: 6,
   },
+  headerMenuButton: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    elevation: 3,
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   menuButton: {
     backgroundColor: '#fff',
     borderRadius: 20,
     elevation: 3,
-    padding: 6,
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addTaskButton: {
+    backgroundColor: '#FA774C',
+    borderRadius: 20,
+    elevation: 3,
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   floatingMenu: {
     position: 'absolute',
-    top: -70,
+    top: 50,
     right: 10,
     backgroundColor: '#fff',
     borderRadius: 12,
     elevation: 5,
     paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1000,
   },
   menuOption: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   menuOptionText: {
     fontFamily: 'Poppins-Regular',

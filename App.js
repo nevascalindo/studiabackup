@@ -2,11 +2,11 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Font from 'expo-font';
-import { GestureHandlerRootView } from 'react-native-gesture-handler'; // 👈 importa aqui
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
-import HomeScreen from './screens/HomeScreen';
+import MainTabNavigator from './screens/MainTabNavigator';
 import AddTaskScreen from './screens/AddTaskScreen';
 import EditTask from './screens/EditTask';
 
@@ -29,13 +29,13 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}> {/* 👈 envolve aqui */}
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Main" component={MainTabNavigator} />
           <Stack.Screen name="AddTask" component={AddTaskScreen} options={{ headerShown: false }} />
           <Stack.Screen name="EditTask" component={EditTask} options={{ headerShown: false }} />
         </Stack.Navigator>

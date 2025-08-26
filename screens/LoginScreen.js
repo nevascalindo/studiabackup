@@ -13,7 +13,7 @@ export default function LoginScreen() {
     if (error) {
       Alert.alert('Erro no login', error.message);
     } else {
-      navigation.replace('Home'); // navega para tela de teste e remove a tela de login da pilha
+      navigation.replace('Main'); // navega para tela principal e remove a tela de login da pilha
     }
   }
 
