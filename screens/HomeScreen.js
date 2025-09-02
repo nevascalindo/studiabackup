@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import LottieView from 'lottie-react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import { ThemeContext } from '../theme/ThemeContext';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const { colors } = useContext(ThemeContext);
 
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,23 +87,23 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <LottieView
           source={require('../assets/loading.json')}
           autoPlay
           loop
           style={{ width: 200, height: 200 }}
         />
-        <Text style={styles.loadingText}>Carregando suas tarefas...</Text>
+        <Text style={[styles.loadingText, { color: colors.accent }]}>Carregando suas tarefas...</Text>
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
+  const renderHeader = () => (
+    <>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerMenuButton}>
-          <Icon name="menu" size={24} color="#333" />
+        <TouchableOpacity style={[styles.headerMenuButton, { backgroundColor: colors.card }]}>
+          <Icon name="menu" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         
         <Image source={require('../assets/logo.png')} style={styles.logo} />
@@ -114,71 +116,86 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.greeting}>Olá, {userName}</Text>
+      <Text style={[styles.greeting, { color: colors.accent }]}>Olá, {userName}</Text>
+    </>
+  );
 
-      <View style={{ flex: 1 }}>
-        {tasks.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <LottieView
-              source={require('../assets/empty.json')}
-              autoPlay
-              loop
-              style={{ width: 150, height: 150 }}
-            />
-            <Text style={styles.emptyText}>Nenhuma tarefa encontrada!</Text>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => navigation.navigate('AddTask')}
-            >
-              <Text style={styles.addButtonText}>Adicionar nova tarefa</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            data={tasks}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <View style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.activityText}>{item.title}</Text>
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <LottieView
+        source={require('../assets/empty.json')}
+        autoPlay
+        loop
+        style={{ width: 150, height: 150 }}
+      />
+      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Nenhuma tarefa encontrada!</Text>
+      <TouchableOpacity 
+        style={styles.addButton}
+        onPress={() => navigation.navigate('AddTask')}
+      >
+        <Text style={styles.addButtonText}>Adicionar nova tarefa</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-                  <TouchableOpacity
-                    onPress={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                    style={styles.menuButton}
-                  >
-                    <Icon name="more-vertical" size={20} color="#333" />
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {tasks.length === 0 ? (
+        <>
+          {renderHeader()}
+          {renderEmpty()}
+        </>
+      ) : (
+        <FlatList
+          data={tasks}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={styles.flatListContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}>
+              <View style={styles.cardHeader}>
+                <Text style={[styles.activityText, { color: colors.textPrimary }]}>{item.title}</Text>
+
+                <TouchableOpacity
+                  onPress={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                  style={[styles.menuButton, { backgroundColor: colors.card }]}
+                >
+                  <Icon name="more-vertical" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.subjectText, { color: colors.textPrimary }]}>{item.subject}</Text>
+              <Text style={[styles.subText, { color: colors.textSecondary }]}>Professor: {item.teacher}</Text>
+
+              <View style={styles.cardFooterRow}>
+                <Text style={[styles.subText, { color: colors.textSecondary }]}>Entrega: {item.due_date}</Text>
+                <Text style={[styles.roomText, { color: colors.textSecondary }]}>Sala {item.room}</Text>
+              </View>
+              
+              {openMenuId === item.id && (
+                <View style={[styles.floatingMenu, { backgroundColor: colors.card }]}>
+                  <TouchableOpacity onPress={() => handleEditTask(item)} style={styles.menuOption}>
+                    <Text style={[styles.menuOptionText, { color: colors.textPrimary }]}>Editar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteTask(item.id)} style={styles.menuOption}>
+                    <Text style={[styles.menuOptionText, { color: 'red' }]}>Excluir</Text>
                   </TouchableOpacity>
                 </View>
-
-                <Text style={styles.subjectText}>{item.subject}</Text>
-                <Text style={styles.subText}>Professor: {item.teacher}</Text>
-
-                <View style={styles.cardFooterRow}>
-                  <Text style={styles.subText}>Entrega: {item.due_date}</Text>
-                  <Text style={styles.roomText}>Sala {item.room}</Text>
-                </View>
-                
-                {openMenuId === item.id && (
-                  <View style={styles.floatingMenu}>
-                    <TouchableOpacity onPress={() => handleEditTask(item)} style={styles.menuOption}>
-                      <Text style={styles.menuOptionText}>Editar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteTask(item.id)} style={styles.menuOption}>
-                      <Text style={[styles.menuOptionText, { color: 'red' }]}>Excluir</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            )}
-          />
-        )}
-      </View>
+              )}
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF', padding: 20 },
+  container: { flex: 1, padding: 20 },
+  flatListContent: { 
+    paddingBottom: 100 // Espaço extra para os tabs
+  },
   header: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 

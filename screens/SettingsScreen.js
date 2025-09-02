@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useIsFocused } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import { ThemeContext } from '../theme/ThemeContext';
 
 export default function SettingsScreen() {
   const isFocused = useIsFocused();
   const [user, setUser] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const { mode, colors, toggleTheme } = React.useContext(ThemeContext);
 
   const fetchUser = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -29,40 +31,52 @@ export default function SettingsScreen() {
     }
   }, [isFocused]);
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      // noop
+    }
+  };
+
+  const confirmLogout = () => {
+    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: handleLogout },
+    ]);
+  };
+
   const settingsOptions = [
-    { icon: 'user', title: 'Conta', onPress: () => {} },
+    { icon: 'user', title: 'Conta', onPress: confirmLogout },
     { icon: 'shield', title: 'Privacidade', onPress: () => {} },
     { icon: 'bell', title: 'Notificações', onPress: () => {} },
     { icon: 'help-circle', title: 'Ajuda', onPress: () => {} },
     { icon: 'refresh-cw', title: 'Armazenamento e dados', onPress: () => {} },
     { icon: 'user-check', title: 'Acessibilidade', onPress: () => {} },
     { icon: 'heart', title: 'Convidar amigos', onPress: () => {} },
+    { icon: mode === 'dark' ? 'sun' : 'moon', title: mode === 'dark' ? 'Modo claro' : 'Modo escuro', onPress: toggleTheme },
   ];
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
   return (
-    <View style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Configurações</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Configurações</Text>
       </View>
 
       {/* Barra de pesquisa */}
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card }] }>
+        <Icon name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.textPrimary }]}
           placeholder="Pesquisar"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.textSecondary}
           value={searchText}
           onChangeText={setSearchText}
         />
       </View>
 
       {/* Perfil do usuário */}
-      <View style={styles.profileSection}>
+      <View style={[styles.profileSection, { backgroundColor: colors.card }] }>
         <View style={styles.profileHeader}>
           <Image
             source={require('../assets/logo.png')}
@@ -70,47 +84,41 @@ export default function SettingsScreen() {
           />
           <View style={styles.profileInfo}>
             <View style={styles.nicknameRow}>
-              <Text style={styles.nickname}>{user?.nickname || 'nevasca 👋'}</Text>
+              <Text style={[styles.nickname, { color: colors.accent }]}>{user?.nickname || 'nevasca 👋'}</Text>
               <View style={styles.infoBadge}>
                 <Text style={styles.infoBadgeText}>2 INFO</Text>
               </View>
             </View>
-            <Text style={styles.fullName}>{user?.name || 'Lucas Merini Flores'}</Text>
+            <Text style={[styles.fullName, { color: colors.textPrimary }]}>{user?.name || 'Lucas Merini Flores'}</Text>
           </View>
         </View>
         
-        <TouchableOpacity style={styles.editProfileButton}>
+        <TouchableOpacity style={[styles.editProfileButton, { borderColor: colors.accent }]}>
           <Icon name="edit-3" size={16} color="#FA774C" />
-          <Text style={styles.editProfileText}>Editar Perfil</Text>
+          <Text style={[styles.editProfileText, { color: colors.accent }]}>Editar Perfil</Text>
           <Icon name="chevron-right" size={16} color="#FA774C" />
         </TouchableOpacity>
       </View>
 
       {/* Opções de configuração */}
-      <ScrollView style={styles.settingsList} showsVerticalScrollIndicator={false}>
+      <View style={styles.settingsList}>
         {settingsOptions.map((option, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.settingOption}
+            style={[styles.settingOption, { borderBottomColor: colors.border }]}
             onPress={option.onPress}
           >
             <View style={styles.settingLeft}>
-              <View style={styles.settingIconContainer}>
-                <Icon name={option.icon} size={20} color="#333" />
+              <View style={[styles.settingIconContainer, { backgroundColor: colors.card }]}>
+                <Icon name={option.icon} size={20} color={colors.textPrimary} />
               </View>
-              <Text style={styles.settingTitle}>{option.title}</Text>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>{option.title}</Text>
             </View>
-            <Icon name="chevron-right" size={20} color="#666" />
+            <Icon name="chevron-right" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         ))}
-      </ScrollView>
-
-      {/* Botão de logout */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="log-out" size={20} color="#FFF" />
-        <Text style={styles.logoutText}>Sair</Text>
-      </TouchableOpacity>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -118,10 +126,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 100, // Espaço extra para os tabs
   },
   header: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 30,
     paddingTop: 20,
   },
@@ -134,10 +145,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F8F8',
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginBottom: 30,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 16,
   },
   searchIcon: {
     marginRight: 10,
@@ -150,9 +161,9 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     backgroundColor: '#F8F8F8',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 30,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -200,9 +211,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFF',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#FA774C',
   },
@@ -219,7 +230,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 18,
+    paddingVertical: 14,
     paddingHorizontal: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
@@ -229,13 +240,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#F8F8F8',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 15,
+    marginRight: 12,
   },
   settingTitle: {
     fontSize: 16,
@@ -247,10 +258,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FF4757',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 22,
+    marginTop: 12,
   },
   logoutText: {
     fontSize: 16,

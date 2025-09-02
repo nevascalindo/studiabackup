@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { ThemeContext } from '../theme/ThemeContext';
 
 export default function AddTaskScreen() {
   const navigation = useNavigation();
+  const { colors } = useContext(ThemeContext);
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -59,75 +61,81 @@ export default function AddTaskScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Nova Atividade</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Text style={[styles.title, { color: colors.accent }]}>Nova Atividade</Text>
 
-      <TextInput
-        placeholder="Título"
-        value={title}
-        onChangeText={setTitle}
-        style={styles.input}
-      />
+          <TextInput
+            placeholder="Título"
+            placeholderTextColor={colors.textSecondary}
+            value={title}
+            onChangeText={setTitle}
+            style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.accent }]}
+          />
 
-      <TouchableOpacity onPress={showPicker} style={styles.input}>
-        <Text style={{ fontSize: 16, fontFamily: 'Poppins-Regular', color: '#333' }}>
-          {dueDate.toISOString().split('T')[0]}
-        </Text>
-      </TouchableOpacity>
+          <TouchableOpacity onPress={showPicker} style={[styles.input, { backgroundColor: colors.card, borderColor: colors.accent }]}>
+            <Text style={{ fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textPrimary }}>
+              {dueDate.toISOString().split('T')[0]}
+            </Text>
+          </TouchableOpacity>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={dueDate}
-          mode="date"
-          display="default"
-          onChange={onChangeDate}
-        />
-      )}
+          {showDatePicker && (
+            <DateTimePicker
+              value={dueDate}
+              mode="date"
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
 
-      <Text style={styles.label}>Professor:</Text>
-      <Picker
-        selectedValue={teacher}
-        onValueChange={(itemValue) => setTeacher(itemValue)}
-        style={styles.input}
-      >
-        <Picker.Item label="Prof. Ana" value="Prof. Ana" />
-        <Picker.Item label="Prof. João" value="Prof. João" />
-        <Picker.Item label="Prof. Carla" value="Prof. Carla" />
-      </Picker>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Professor:</Text>
+          <Picker
+            selectedValue={teacher}
+            onValueChange={(itemValue) => setTeacher(itemValue)}
+            style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary }]}
+          >
+            <Picker.Item label="Prof. Ana" value="Prof. Ana" />
+            <Picker.Item label="Prof. João" value="Prof. João" />
+            <Picker.Item label="Prof. Carla" value="Prof. Carla" />
+          </Picker>
 
-      <Text style={styles.label}>Sala:</Text>
-      <Picker
-        selectedValue={room}
-        onValueChange={(itemValue) => setRoom(itemValue)}
-        style={styles.input}
-      >
-        <Picker.Item label="101" value="101" />
-        <Picker.Item label="202" value="202" />
-        <Picker.Item label="303" value="303" />
-      </Picker>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Sala:</Text>
+          <Picker
+            selectedValue={room}
+            onValueChange={(itemValue) => setRoom(itemValue)}
+            style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary }]}
+          >
+            <Picker.Item label="101" value="101" />
+            <Picker.Item label="202" value="202" />
+            <Picker.Item label="303" value="303" />
+          </Picker>
 
-      <Text style={styles.label}>Matéria:</Text>
-      <Picker
-        selectedValue={subject}
-        onValueChange={(itemValue) => setSubject(itemValue)}
-        style={styles.input}
-      >
-        <Picker.Item label="Matemática" value="Matemática" />
-        <Picker.Item label="História" value="História" />
-        <Picker.Item label="Inglês" value="Inglês" />
-        <Picker.Item label="Física" value="Física" />
-        <Picker.Item label="Português" value="Português" />
-      </Picker>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Matéria:</Text>
+          <Picker
+            selectedValue={subject}
+            onValueChange={(itemValue) => setSubject(itemValue)}
+            style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary }]}
+          >
+            <Picker.Item label="Matemática" value="Matemática" />
+            <Picker.Item label="História" value="História" />
+            <Picker.Item label="Inglês" value="Inglês" />
+            <Picker.Item label="Física" value="Física" />
+            <Picker.Item label="Português" value="Português" />
+          </Picker>
 
-      <TouchableOpacity style={styles.button} onPress={handleAddTask}>
-        <Text style={styles.buttonText}>Salvar</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleAddTask}>
+            <Text style={styles.buttonText}>Salvar</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF', padding: 20 },
+  container: { flex: 1, padding: 20 },
+  scrollContent: { paddingBottom: 120 }, // Mais espaço para os tabs
   title: { fontSize: 24, color: '#FA774C', fontFamily: 'Poppins-Bold', marginBottom: 20 },
   label: { fontSize: 16, fontFamily: 'Poppins-Regular', color: '#333', marginTop: 10 },
   input: {

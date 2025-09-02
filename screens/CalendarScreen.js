@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useIsFocused } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import { ThemeContext } from '../theme/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export default function CalendarScreen() {
   const isFocused = useIsFocused();
+  const { colors } = useContext(ThemeContext);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [tasks, setTasks] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -79,6 +81,16 @@ export default function CalendarScreen() {
     });
   };
 
+  const isPastDay = (day) => {
+    if (!day) return false;
+    const compareDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    const today = new Date();
+    // zerar horas
+    compareDate.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    return compareDate < today;
+  };
+
   const getDateColor = (day) => {
     const tasksForDate = getTasksForDate(day);
     if (tasksForDate.length === 0) return null;
@@ -107,22 +119,22 @@ export default function CalendarScreen() {
   const days = getDaysInMonth(currentMonth);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
           Calendário <Text style={styles.yearText}>{currentMonth.getFullYear()}</Text>
         </Text>
       </View>
 
       <View style={styles.monthSelector}>
         <TouchableOpacity onPress={() => changeMonth('prev')} style={styles.monthButton}>
-          <Icon name="chevron-left" size={24} color="#333" />
+          <Icon name="chevron-left" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         
-        <Text style={styles.monthText}>{months[currentMonth.getMonth()]}</Text>
+        <Text style={[styles.monthText, { color: colors.textPrimary }]}>{months[currentMonth.getMonth()]}</Text>
         
         <TouchableOpacity onPress={() => changeMonth('next')} style={styles.monthButton}>
-          <Icon name="chevron-right" size={24} color="#333" />
+          <Icon name="chevron-right" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -131,7 +143,7 @@ export default function CalendarScreen() {
         <View style={styles.weekDaysRow}>
           {daysOfWeek.map((day, index) => (
             <View key={index} style={styles.weekDayCell}>
-              <Text style={styles.weekDayText}>{day}</Text>
+              <Text style={[styles.weekDayText, { color: colors.textSecondary }]}>{day}</Text>
             </View>
           ))}
         </View>
@@ -147,7 +159,7 @@ export default function CalendarScreen() {
             >
               {day && (
                 <>
-                  <Text style={styles.dayText}>{day}</Text>
+                  <Text style={[styles.dayText, { color: colors.textPrimary }, isPastDay(day) && styles.dayTextPast]}>{day}</Text>
                   {getDateColor(day) && (
                     <View style={styles.taskIndicator}>
                       {Array.isArray(getDateColor(day)) ? (
@@ -158,7 +170,7 @@ export default function CalendarScreen() {
                             style={[
                               styles.multipleTaskColor,
                               { backgroundColor: color },
-                              { marginBottom: colorIndex < 2 ? 2 : 0 }
+                              { marginTop: colorIndex > 0 ? 2 : 0 }
                             ]}
                           />
                         ))
@@ -177,32 +189,41 @@ export default function CalendarScreen() {
 
       {/* Detalhes da data selecionada */}
       {selectedDate && (
-        <View style={styles.selectedDateInfo}>
-          <Text style={styles.selectedDateTitle}>
-            {selectedDate} de {months[currentMonth.getMonth()]}
-          </Text>
-          {getTasksForDate(selectedDate).map((task, index) => (
-            <View key={index} style={[styles.taskItem, { backgroundColor: task.color || '#F2F2F2' }]}>
-              <Text style={styles.taskTitle}>{task.title}</Text>
-              <Text style={styles.taskSubject}>{task.subject}</Text>
-              <Text style={styles.taskTeacher}>Professor: {task.teacher}</Text>
-              <Text style={styles.taskRoom}>Sala {task.room}</Text>
-            </View>
-          ))}
+        <View style={[styles.selectedDateInfo, { backgroundColor: colors.card }]}>
+          <View style={styles.selectedHeaderRow}>
+            <Text style={[styles.selectedDateTitle, { color: colors.textPrimary }]}>
+              {selectedDate} de {months[currentMonth.getMonth()]}
+            </Text>
+            <TouchableOpacity onPress={() => setSelectedDate(null)} style={[styles.closeButton, { backgroundColor: colors.background }]}>
+              <Icon name="x" size={18} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={{ maxHeight: 200 }} showsVerticalScrollIndicator={false}>
+            {getTasksForDate(selectedDate).map((task, index) => (
+              <View key={index} style={[styles.taskItem, { backgroundColor: task.color || colors.card }]}>
+                <Text style={[styles.taskTitle, { color: colors.textPrimary }]}>{task.title}</Text>
+                <Text style={[styles.taskSubject, { color: colors.textPrimary }]}>{task.subject}</Text>
+                <Text style={[styles.taskTeacher, { color: colors.textSecondary }]}>Professor: {task.teacher}</Text>
+                <Text style={[styles.taskRoom, { color: colors.textSecondary }]}>Sala {task.room}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 100, // Espaço extra para os tabs
   },
   header: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 30,
     paddingTop: 20,
   },
@@ -264,19 +285,21 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   taskIndicator: {
-    position: 'absolute',
-    bottom: 8,
+    marginTop: 4,
     alignItems: 'center',
   },
   singleTaskColor: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 3,
+    borderRadius: 2,
   },
   multipleTaskColor: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 3,
+    borderRadius: 2,
+  },
+  dayTextPast: {
+    color: '#C2C2C2',
   },
   selectedDateInfo: {
     backgroundColor: '#F8F8F8',
@@ -284,11 +307,27 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginTop: 20,
   },
+  selectedHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
   selectedDateTitle: {
     fontSize: 18,
     fontFamily: 'Poppins-Bold',
     color: '#333',
     marginBottom: 15,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#EEE',
   },
   taskItem: {
     padding: 15,
