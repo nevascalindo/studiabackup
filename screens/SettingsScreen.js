@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { ThemeContext } from '../theme/ThemeContext';
 
 export default function SettingsScreen() {
   const isFocused = useIsFocused();
+  const navigation = useNavigation();
   const [user, setUser] = useState(null);
   const [searchText, setSearchText] = useState('');
   const { mode, colors, toggleTheme } = React.useContext(ThemeContext);
@@ -93,7 +94,7 @@ export default function SettingsScreen() {
           </View>
         </View>
         
-        <TouchableOpacity style={[styles.editProfileButton, { borderColor: colors.accent }]}>
+        <TouchableOpacity style={[styles.editProfileButton, { borderColor: colors.accent }]} onPress={() => navigation.navigate('EditProfile')}>
           <Icon name="edit-3" size={16} color="#FA774C" />
           <Text style={[styles.editProfileText, { color: colors.accent }]}>Editar Perfil</Text>
           <Icon name="chevron-right" size={16} color="#FA774C" />

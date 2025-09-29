@@ -9,7 +9,7 @@ const { width } = Dimensions.get('window');
 
 export default function CalendarScreen() {
   const isFocused = useIsFocused();
-  const { colors } = useContext(ThemeContext);
+  const { colors, mode } = useContext(ThemeContext);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [tasks, setTasks] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -200,7 +200,15 @@ export default function CalendarScreen() {
           </View>
           <ScrollView style={{ maxHeight: 200 }} showsVerticalScrollIndicator={false}>
             {getTasksForDate(selectedDate).map((task, index) => (
-              <View key={index} style={[styles.taskItem, { backgroundColor: task.color || colors.card }]}>
+              <View
+                key={index}
+                style={[
+                  styles.taskItem,
+                  mode === 'dark'
+                    ? { backgroundColor: colors.card, borderLeftWidth: 6, borderLeftColor: task.color || '#F2F2F2' }
+                    : { backgroundColor: task.color || colors.card }
+                ]}
+              >
                 <Text style={[styles.taskTitle, { color: colors.textPrimary }]}>{task.title}</Text>
                 <Text style={[styles.taskSubject, { color: colors.textPrimary }]}>{task.subject}</Text>
                 <Text style={[styles.taskTeacher, { color: colors.textSecondary }]}>Professor: {task.teacher}</Text>

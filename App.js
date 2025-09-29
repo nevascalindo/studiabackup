@@ -11,6 +11,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import MainTabNavigator from './screens/MainTabNavigator';
 import AddTaskScreen from './screens/AddTaskScreen';
 import EditTask from './screens/EditTask';
+import EditProfileScreen from './screens/EditProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -62,6 +63,7 @@ export default function App() {
             <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen name="AddTask" component={AddTaskScreen} options={{ headerShown: false }} />
             <Stack.Screen name="EditTask" component={EditTask} options={{ headerShown: false }} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </ThemeProvider>

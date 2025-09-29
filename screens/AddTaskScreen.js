@@ -25,6 +25,22 @@ export default function AddTaskScreen() {
   };
 
   const handleAddTask = async () => {
+    // Validar título
+    if (!title.trim()) {
+      Alert.alert('Erro', 'O título da tarefa não pode estar vazio!');
+      return;
+    }
+
+    // Validar data futura (sem horas)
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const chosen = new Date(dueDate);
+    chosen.setHours(0,0,0,0);
+    if (chosen < today) {
+      Alert.alert('Erro', 'Escolha uma data que ainda não passou.');
+      return;
+    }
+
     const { data: userData } = await supabase.auth.getUser();
 
     const { error } = await supabase
@@ -85,6 +101,7 @@ export default function AddTaskScreen() {
               value={dueDate}
               mode="date"
               display="default"
+              minimumDate={new Date()}
               onChange={onChangeDate}
             />
           )}

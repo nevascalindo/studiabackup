@@ -31,6 +31,16 @@ export default function EditTaskScreen() {
       return;
     }
 
+    // Validar data futura (sem horas)
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const chosen = new Date(dueDate);
+    chosen.setHours(0,0,0,0);
+    if (chosen < today) {
+      Alert.alert('Erro', 'Escolha uma data que ainda não passou.');
+      return;
+    }
+
     const { error } = await supabase
       .from('activities')
       .update({
@@ -84,6 +94,7 @@ export default function EditTaskScreen() {
           value={dueDate}
           mode="date"
           display="default"
+          minimumDate={new Date()}
           onChange={onChangeDate}
         />
       )}

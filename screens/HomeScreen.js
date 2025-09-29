@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import LottieView from 'lottie-react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import LottieView from 'lottie-react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { ThemeContext } from '../theme/ThemeContext';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const { colors } = useContext(ThemeContext);
+  const { colors, mode } = useContext(ThemeContext);
 
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -153,7 +154,28 @@ export default function HomeScreen() {
           contentContainerStyle={styles.flatListContent}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View style={[styles.activityCard, { backgroundColor: item.color || '#F2F2F2' }]}>
+            <Swipeable
+              renderRightActions={() => (
+                <View style={styles.swipeCompleteContainer}>
+                  <LottieView
+                    source={require('../assets/loading.json')}
+                    autoPlay
+                    loop
+                    style={{ width: 60, height: 60 }}
+                  />
+                  <Text style={styles.swipeCompleteText}>Concluir</Text>
+                </View>
+              )}
+              onSwipeableOpen={() => handleCompleteTask(item.id)}
+            >
+            <View
+              style={[
+                styles.activityCard,
+                mode === 'dark'
+                  ? { backgroundColor: colors.card, borderLeftWidth: 6, borderLeftColor: item.color || '#F2F2F2' }
+                  : { backgroundColor: item.color || '#F2F2F2' }
+              ]}
+            > 
               <View style={styles.cardHeader}>
                 <Text style={[styles.activityText, { color: colors.textPrimary }]}>{item.title}</Text>
 
@@ -184,6 +206,7 @@ export default function HomeScreen() {
                 </View>
               )}
             </View>
+            </Swipeable>
           )}
         />
       )}
