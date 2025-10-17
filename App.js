@@ -11,7 +11,16 @@ import RegisterScreen from './screens/RegisterScreen';
 import MainTabNavigator from './screens/MainTabNavigator';
 import AddTaskScreen from './screens/AddTaskScreen';
 import EditTask from './screens/EditTask';
-import EditProfileScreen from './screens/EditProfileScreen';
+import EditProfile from './screens/EditProfile';
+import AccountSettings from './screens/AccountSettings';
+import PrivacySettings from './screens/PrivacySettings';
+import NotificationSettings from './screens/NotificationSettings';
+import HelpScreen from './screens/HelpScreen';
+import StorageSettings from './screens/StorageSettings';
+import AccessibilitySettings from './screens/AccessibilitySettings';
+import InviteFriends from './screens/InviteFriends';
+import TermsScreen from './screens/TermsScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -63,7 +72,16 @@ export default function App() {
             <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen name="AddTask" component={AddTaskScreen} options={{ headerShown: false }} />
             <Stack.Screen name="EditTask" component={EditTask} options={{ headerShown: false }} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false }} />
+            <Stack.Screen name="AccountSettings" component={AccountSettings} options={{ headerShown: false }} />
+            <Stack.Screen name="PrivacySettings" component={PrivacySettings} options={{ headerShown: false }} />
+            <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
+            <Stack.Screen name="HelpScreen" component={HelpScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="StorageSettings" component={StorageSettings} options={{ headerShown: false }} />
+            <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettings} options={{ headerShown: false }} />
+            <Stack.Screen name="InviteFriends" component={InviteFriends} options={{ headerShown: false }} />
+            <Stack.Screen name="Terms" component={TermsScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </ThemeProvider>

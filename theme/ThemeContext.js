@@ -13,12 +13,18 @@ export const ThemeContext = createContext({
     border: '#F0F0F0',
     tabGlass: 'rgba(255,255,255,0.65)'
   },
+  textScale: 1,
+  reduceMotion: false,
   toggleTheme: () => {},
+  setTextScale: (_s) => {},
+  setReduceMotion: (_v) => {},
 });
 
 export function ThemeProvider({ children }) {
   const systemScheme = Appearance.getColorScheme();
   const [mode, setMode] = useState(systemScheme || 'light');
+  const [textScale, setTextScaleState] = useState(1);
+  const [reduceMotion, setReduceMotionState] = useState(false);
 
   // Carregar preferência salva do AsyncStorage
   useEffect(() => {
@@ -28,6 +34,13 @@ export function ThemeProvider({ children }) {
         if (savedTheme) {
           setMode(savedTheme);
         }
+        const savedScale = await AsyncStorage.getItem('a11y_textScale');
+        if (savedScale) {
+          const n = Number(savedScale);
+          if (!Number.isNaN(n) && n > 0) setTextScaleState(n);
+        }
+        const savedReduce = await AsyncStorage.getItem('a11y_reduceMotion');
+        if (savedReduce) setReduceMotionState(savedReduce === '1');
       } catch (error) {
         console.error('Erro ao carregar preferência do tema:', error);
       }
@@ -55,6 +68,25 @@ export function ThemeProvider({ children }) {
     }
   };
 
+  const setTextScale = async (scale) => {
+    const clamped = Math.max(0.8, Math.min(scale, 1.6));
+    setTextScaleState(clamped);
+    try {
+      await AsyncStorage.setItem('a11y_textScale', String(clamped));
+    } catch (e) {
+      // noop
+    }
+  };
+
+  const setReduceMotion = async (val) => {
+    setReduceMotionState(Boolean(val));
+    try {
+      await AsyncStorage.setItem('a11y_reduceMotion', val ? '1' : '0');
+    } catch (e) {
+      // noop
+    }
+  };
+
   const colors = useMemo(() => {
     if (mode === 'dark') {
       return {
@@ -78,7 +110,7 @@ export function ThemeProvider({ children }) {
     };
   }, [mode]);
 
-  const value = useMemo(() => ({ mode, colors, toggleTheme }), [mode, colors]);
+  const value = useMemo(() => ({ mode, colors, toggleTheme, textScale, reduceMotion, setTextScale, setReduceMotion }), [mode, colors, textScale, reduceMotion]);
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

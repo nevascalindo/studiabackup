@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { ThemeContext } from '../theme/ThemeContext';
 
@@ -32,6 +32,12 @@ export default function SettingsScreen() {
     }
   }, [isFocused]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUser();
+    }, [])
+  );
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -48,13 +54,13 @@ export default function SettingsScreen() {
   };
 
   const settingsOptions = [
-    { icon: 'user', title: 'Conta', onPress: confirmLogout },
-    { icon: 'shield', title: 'Privacidade', onPress: () => {} },
-    { icon: 'bell', title: 'Notificações', onPress: () => {} },
-    { icon: 'help-circle', title: 'Ajuda', onPress: () => {} },
-    { icon: 'refresh-cw', title: 'Armazenamento e dados', onPress: () => {} },
-    { icon: 'user-check', title: 'Acessibilidade', onPress: () => {} },
-    { icon: 'heart', title: 'Convidar amigos', onPress: () => {} },
+    { icon: 'user', title: 'Conta', onPress: () => navigation.navigate('AccountSettings') },
+    { icon: 'shield', title: 'Privacidade', onPress: () => navigation.navigate('PrivacySettings') },
+    { icon: 'bell', title: 'Notificações', onPress: () => navigation.navigate('NotificationSettings') },
+    { icon: 'help-circle', title: 'Ajuda', onPress: () => navigation.navigate('HelpScreen') },
+    { icon: 'refresh-cw', title: 'Armazenamento e dados', onPress: () => navigation.navigate('StorageSettings') },
+    { icon: 'user-check', title: 'Acessibilidade', onPress: () => navigation.navigate('AccessibilitySettings') },
+    { icon: 'heart', title: 'Convidar amigos', onPress: () => navigation.navigate('InviteFriends') },
     { icon: mode === 'dark' ? 'sun' : 'moon', title: mode === 'dark' ? 'Modo claro' : 'Modo escuro', onPress: toggleTheme },
   ];
 
@@ -80,14 +86,14 @@ export default function SettingsScreen() {
       <View style={[styles.profileSection, { backgroundColor: colors.card }] }>
         <View style={styles.profileHeader}>
           <Image
-            source={require('../assets/logo.png')}
+            source={user?.avatar_url ? { uri: user.avatar_url } : require('../assets/logo.png')}
             style={styles.profileImage}
           />
           <View style={styles.profileInfo}>
             <View style={styles.nicknameRow}>
               <Text style={[styles.nickname, { color: colors.accent }]}>{user?.nickname || 'nevasca 👋'}</Text>
               <View style={styles.infoBadge}>
-                <Text style={styles.infoBadgeText}>2 INFO</Text>
+                <Text style={styles.infoBadgeText}>3 INFO</Text>
               </View>
             </View>
             <Text style={[styles.fullName, { color: colors.textPrimary }]}>{user?.name || 'Lucas Merini Flores'}</Text>
